@@ -28,6 +28,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -67,6 +68,8 @@ private fun DownloadScreenView(
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         contentWindowInsets = WindowInsets.safeDrawing,
@@ -141,7 +144,11 @@ private fun DownloadScreenView(
                         .padding(bottom = 8.dp)
                         .widthIn(max = 460.dp)
                         .fillMaxWidth(),
-                    onClick = onDownloadClick,
+                    onClick = {
+                        focusManager.clearFocus()
+                        keyboardController?.hide()
+                        onDownloadClick()
+                    },
                 ) {
                     Text(
                         text = "Download",

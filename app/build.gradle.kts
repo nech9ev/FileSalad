@@ -41,6 +41,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -69,14 +70,12 @@ dependencies {
     implementation(libs.kotlinx.serialization.json)
     implementation(libs.kotlinx.collections.immutable)
 
-    implementation(platform(libs.okhttp.bom))
-    implementation(libs.okhttp)
-    implementation(libs.okhttp3.logging.interceptor)
-    implementation(libs.ktor.client.android)
-    implementation(libs.ktor.serialization.json)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.client.logging)
-    implementation(libs.ktor.client.okhttp)
+    implementation(platform(libs.ktor.bom))
+    implementation(libs.ktor.ktor.client.android)
+    implementation(libs.ktor.client.serialization)
+    implementation(libs.ktor.ktor.client.logging)
+    implementation(libs.ktor.ktor.client.content.negotiation)
+    implementation(libs.ktor.serialization.kotlinx.json)
 
     implementation(libs.timber)
     lintChecks(libs.compose.lint.checks)
