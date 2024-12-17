@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.lingburg.filesalad.feature_download.DownloadScreen
+import com.lingburg.filesalad.feature_files.FilesScreen
 
 
 @Composable
@@ -17,14 +17,8 @@ fun FileSaladNavHost(
         navController = appState.navController,
         startDestination = DownloadFileScreen,
     ) {
-        composable<Main> {
-
-        }
-        composable<UploadFile> {
-
-        }
         composable<DownloadFileScreen> {
-            DownloadScreen(
+            FilesScreen(
                 appState = appState,
             )
         }

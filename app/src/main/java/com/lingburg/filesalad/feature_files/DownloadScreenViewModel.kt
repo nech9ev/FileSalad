@@ -1,30 +1,36 @@
-package com.lingburg.filesalad.feature_download
+package com.lingburg.filesalad.feature_files
 
 import android.app.DownloadManager
 import android.content.Context
+import android.net.Uri
 import android.os.Environment
 import android.webkit.MimeTypeMap
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lingburg.filesalad.DownloadFileListener
-import com.lingburg.filesalad.domain.DownloadInteractor
+import com.lingburg.filesalad.NavigationEvent
+import com.lingburg.filesalad.core.FileManager
+import com.lingburg.filesalad.domain.FileInteractor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import timber.log.Timber
+import java.io.File
 import javax.inject.Inject
 
 
 @HiltViewModel
 class DownloadScreenViewModel @Inject constructor(
     @ApplicationContext private val applicationContext: Context,
-    private val interactor: DownloadInteractor,
+    private val interactor: FileInteractor,
 ) : ViewModel() {
 
-    val uiState: MutableStateFlow<DownloadScreenUi> = MutableStateFlow(DownloadScreenUi.empty())
+    val uiState: MutableStateFlow<FilesScreenUi> = MutableStateFlow(FilesScreenUi.empty())
+    val navigationEvent: MutableSharedFlow<NavigationEvent> = MutableSharedFlow()
 
     fun onWordTextChanged(updatedIndex: Int, text: String) {
         uiState.update { ui ->
@@ -57,8 +63,28 @@ class DownloadScreenViewModel @Inject constructor(
         }
     }
 
-    fun onBackClick() {
+    fun onDocumentSelected(uri: Uri) {
+        val fileName = FileManager.getFileName(uri, applicationContext.contentResolver)
+        val path = FileManager.getFilePathFromUri(
+            uri,
+            applicationContext.contentResolver,
+            applicationContext.externalCacheDir
+        )?.path
+        fileName ?: return
+        path ?: return
 
+        viewModelScope.launch {
+            val words = interactor.uploadFile(
+                file = File(path),
+                name = fileName
+            ).words
+            Timber.e(words.toString())
+            navigationEvent.emit(
+                NavigationEvent.ShareWords(
+                    text = words.joinToString(separator = " "),
+                )
+            )
+        }
     }
 
     private fun download(

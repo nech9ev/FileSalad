@@ -1,4 +1,4 @@
-package com.lingburg.filesalad.feature_download.component
+package com.lingburg.filesalad.feature_files.component
 
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -12,7 +12,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
-import com.lingburg.filesalad.feature_download.WordUi
+import com.lingburg.filesalad.feature_files.WordUi
 import com.lingburg.filesalad.ui.theme.AppTheme
 
 private val keyboardOptions = KeyboardOptions(
@@ -33,7 +33,7 @@ fun WordItem(
         modifier = modifier,
         label = {
             Text(
-                text =  ui.label,
+                text = ui.label,
             )
         },
         value = ui.text,

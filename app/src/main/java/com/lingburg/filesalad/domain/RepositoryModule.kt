@@ -1,6 +1,6 @@
 package com.lingburg.filesalad.domain
 
-import com.lingburg.filesalad.data.DownloadRepositoryImpl
+import com.lingburg.filesalad.data.FileRepositoryImpl
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -11,5 +11,5 @@ import dagger.hilt.components.SingletonComponent
 internal interface RepositoryModule {
 
     @Binds
-    fun bindDownloadRepository(impl: DownloadRepositoryImpl): DownloadRepository
+    fun bindFileRepository(impl: FileRepositoryImpl): FileRepository
 }
