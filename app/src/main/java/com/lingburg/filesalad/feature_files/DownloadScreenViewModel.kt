@@ -8,12 +8,14 @@ import android.webkit.MimeTypeMap
 import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.lingburg.filesalad.NavigationEvent
 import com.lingburg.filesalad.core.FileManager
 import com.lingburg.filesalad.domain.FileInteractor
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.collections.immutable.toImmutableList
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
@@ -21,6 +23,8 @@ import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
 import javax.inject.Inject
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
 
 
 @HiltViewModel
@@ -31,6 +35,7 @@ class DownloadScreenViewModel @Inject constructor(
 
     val uiState: MutableStateFlow<FilesScreenUi> = MutableStateFlow(FilesScreenUi.empty())
     val navigationEvent: MutableSharedFlow<NavigationEvent> = MutableSharedFlow()
+    val snackbarState: MutableSharedFlow<SnackbarState> = MutableSharedFlow()
 
     fun onWordTextChanged(updatedIndex: Int, text: String) {
         uiState.update { ui ->
@@ -54,13 +59,37 @@ class DownloadScreenViewModel @Inject constructor(
         }
         if (words.any { word -> word.isBlank() }) return
 
-        viewModelScope.launch {
-            val downloadLink = interactor.getDownloadLink(words)
-            download(
-                link = downloadLink.fileLink,
-                fileName = downloadLink.fileName,
-            )
-        }
+        viewModelScope.launchCatching(
+            tryBlock = {
+                uiState.update { ui ->
+                    ui.copy(
+                        downloadProgress = true,
+                    )
+                }
+                val downloadLink = interactor.getDownloadLink(words)
+                download(
+                    link = downloadLink.fileLink,
+                    fileName = downloadLink.fileName,
+                )
+                snackbarState.emit(
+                    SnackbarState.Success(
+                        text = "File downloaded"
+                    )
+                )
+            },
+            finalBlock = {
+                uiState.update { ui ->
+                    ui.copy(
+                        downloadProgress = false,
+                    )
+                }
+                snackbarState.tryEmit(
+                    SnackbarState.Success(
+                        text = "Error while downloading. Try again please"
+                    )
+                )
+            }
+        )
     }
 
     fun onDocumentSelected(uri: Uri) {
@@ -73,18 +102,37 @@ class DownloadScreenViewModel @Inject constructor(
         fileName ?: return
         path ?: return
 
-        viewModelScope.launch {
-            val words = interactor.uploadFile(
-                file = File(path),
-                name = fileName
-            ).words
-            Timber.e(words.toString())
-            navigationEvent.emit(
-                NavigationEvent.ShareWords(
-                    text = words.joinToString(separator = " "),
+        viewModelScope.launchCatching(
+            tryBlock = {
+                uiState.update { ui ->
+                    ui.copy(
+                        uploadProgress = true,
+                    )
+                }
+                val words = interactor.uploadFile(
+                    file = File(path),
+                    name = fileName
+                ).words
+                Timber.e(words.toString())
+                navigationEvent.emit(
+                    NavigationEvent.ShareWords(
+                        text = words.joinToString(separator = " "),
+                    )
                 )
-            )
-        }
+            },
+            finalBlock = {
+                uiState.update { ui ->
+                    ui.copy(
+                        uploadProgress = false,
+                    )
+                }
+                snackbarState.tryEmit(
+                    SnackbarState.Success(
+                        text = "Error while uploading. Try again please"
+                    )
+                )
+            }
+        )
     }
 
     private fun download(
@@ -111,5 +159,23 @@ class DownloadScreenViewModel @Inject constructor(
         return if (extension != null) {
             MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
         } else null
+    }
+}
+
+
+inline fun CoroutineScope.launchCatching(
+    context: CoroutineContext = EmptyCoroutineContext,
+    crossinline catchBlock: (Throwable) -> Unit = {},
+    crossinline finalBlock: () -> Unit = {},
+    crossinline tryBlock: suspend () -> Unit
+): Job = launch(context) {
+    try {
+        tryBlock()
+    } catch (expected: CancellationException) {
+        throw expected
+    } catch (e: Throwable) {
+        catchBlock(e)
+    } finally {
+        finalBlock()
     }
 }

@@ -3,9 +3,6 @@
 package com.lingburg.filesalad.feature_files
 
 import android.content.ActivityNotFoundException
-import android.content.ClipData
-import android.content.ClipboardManager
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -26,13 +23,18 @@ import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Snackbar
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -42,11 +44,9 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.content.ContextCompat.getSystemService
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lingburg.filesalad.FileSaladAppState
-import com.lingburg.filesalad.NavigationEvent
 import com.lingburg.filesalad.feature_files.component.WordItem
 import com.lingburg.filesalad.ui.theme.AppTheme
 import kotlinx.collections.immutable.persistentListOf
@@ -58,19 +58,27 @@ fun FilesScreen(
     modifier: Modifier = Modifier,
     viewModel: DownloadScreenViewModel = hiltViewModel(),
 ) {
-    val ui =
-        viewModel.uiState.collectAsStateWithLifecycle(context = Dispatchers.Main.immediate).value
+    val ui = viewModel.uiState.collectAsStateWithLifecycle(
+        context = Dispatchers.Main.immediate,
+    ).value
     val navigationEvent = viewModel.navigationEvent.collectAsStateWithLifecycle(
         initialValue = NavigationEvent.Empty,
         context = Dispatchers.Main.immediate
     ).value
-    val context = LocalContext.current
+    val snackbarState = viewModel.snackbarState.collectAsStateWithLifecycle(
+        initialValue = SnackbarState.Empty,
+        context = Dispatchers.Main.immediate
+    ).value
 
+
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
     LaunchedEffect(navigationEvent) {
         when (navigationEvent) {
             NavigationEvent.Empty -> {}
             is NavigationEvent.ShareWords -> {
-                val textForShare = "Download file with FileSalad using these words: ${navigationEvent.text}"
+                val textForShare =
+                    "Download file with FileSalad using these words: ${navigationEvent.text}"
                 val shareIntent = Intent.createChooser(
                     Intent().setType("text/plain")
                         .setAction(Intent.ACTION_SEND)
@@ -80,12 +88,29 @@ fun FilesScreen(
                 )
                 try {
                     context.startActivity(shareIntent)
-                } catch (_: ActivityNotFoundException) {}
+                } catch (_: ActivityNotFoundException) {
+                }
+            }
+        }
+    }
+    LaunchedEffect(snackbarState) {
+        when (snackbarState) {
+            SnackbarState.Empty -> {}
+            is SnackbarState.Success -> {
+                snackbarHostState.showSnackbar(
+                    message = snackbarState.text,
+                )
+            }
+            is SnackbarState.Error -> {
+                snackbarHostState.showSnackbar(
+                    message = snackbarState.text,
+                )
             }
         }
     }
     FilesScreenView(
         ui = ui,
+        snackbarHostState = snackbarHostState,
         onWordTextChanged = viewModel::onWordTextChanged,
         onDownloadClick = viewModel::onDownloadClick,
         onDocumentSelected = viewModel::onDocumentSelected,
@@ -96,6 +121,7 @@ fun FilesScreen(
 @Composable
 private fun FilesScreenView(
     ui: FilesScreenUi,
+    snackbarHostState: SnackbarHostState,
     onWordTextChanged: (index: Int, text: String) -> Unit,
     onDownloadClick: () -> Unit,
     onDocumentSelected: (Uri) -> Unit,
@@ -116,6 +142,15 @@ private fun FilesScreenView(
     Scaffold(
         modifier = modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         contentWindowInsets = WindowInsets.safeDrawing,
+        snackbarHost = {
+            SnackbarHost(
+                hostState = snackbarHostState,
+            ) { data ->
+                Snackbar(
+                    snackbarData = data,
+                )
+            }
+        },
         topBar = {
             CenterAlignedTopAppBar(
                 modifier = Modifier,
@@ -183,10 +218,15 @@ private fun FilesScreenView(
                         keyboardController?.hide()
                         onDownloadClick()
                     },
+                    enabled = !ui.inProgress,
                 ) {
-                    Text(
-                        text = "Download",
-                    )
+                    when (ui.downloadProgress) {
+                        false -> Text(
+                            text = "Download",
+                        )
+
+                        true -> LinearProgressIndicator()
+                    }
                 }
                 HorizontalDivider(
                     modifier = Modifier.padding(horizontal = 16.dp)
@@ -220,6 +260,7 @@ private fun FilesScreenView(
                         keyboardController?.hide()
                         filePickLauncher.launch(arrayOf("*/*"))
                     },
+                    enabled = !ui.inProgress,
                     colors = ButtonColors(
                         contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
                         containerColor = MaterialTheme.colorScheme.tertiaryContainer,
@@ -231,9 +272,13 @@ private fun FilesScreenView(
                         ),
                     )
                 ) {
-                    Text(
-                        text = "Upload file",
-                    )
+                    when (ui.uploadProgress) {
+                        false -> Text(
+                            text = "Upload file",
+                        )
+
+                        true -> LinearProgressIndicator()
+                    }
                 }
             }
         }
@@ -259,8 +304,10 @@ private fun FilesViewPreview() = AppTheme {
                     text = "rain"
                 ),
             ),
-            inProgress = false,
+            downloadProgress = false,
+            uploadProgress = true,
         ),
+        snackbarHostState = remember { SnackbarHostState() },
         onWordTextChanged = { _, _ -> },
         onDownloadClick = {},
         onDocumentSelected = {},

@@ -1,4 +1,4 @@
-package com.lingburg.filesalad
+package com.lingburg.filesalad.feature_files
 
 sealed interface NavigationEvent {
 

@@ -7,8 +7,11 @@ import kotlinx.collections.immutable.persistentListOf
 @Immutable
 data class FilesScreenUi(
     val words: ImmutableList<WordUi> = persistentListOf(),
-    val inProgress: Boolean,
+    val downloadProgress: Boolean,
+    val uploadProgress: Boolean,
 ) {
+
+    val inProgress = downloadProgress || uploadProgress
 
     companion object {
 
@@ -24,7 +27,8 @@ data class FilesScreenUi(
                     label = "Third word",
                 )
             ),
-            inProgress = false,
+            downloadProgress = false,
+            uploadProgress = false,
         )
     }
 }
