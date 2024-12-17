@@ -17,7 +17,7 @@ jobs:
           java-version: '17'
 
       - name: Вывод секрета в консоль
-        run: echo ${{ secrets.KEY_ALIAS }}"
+        run: echo "${{ secrets.KEY_ALIAS }}"
 
       - name: Decode keystore and create jks
         run: echo "${{ secrets.KEYSTORE_JKS_BASE64 }}" | base64 --decode > app/keystore.jks
