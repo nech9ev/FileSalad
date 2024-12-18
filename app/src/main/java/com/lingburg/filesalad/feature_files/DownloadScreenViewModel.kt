@@ -69,7 +69,6 @@ class DownloadScreenViewModel @Inject constructor(
                 }
                 val downloadLink = interactor.getDownloadLink(words)
                 download(
-                    link = downloadLink.fileLink,
                     fileName = downloadLink.fileName,
                 )
             },
@@ -141,11 +140,10 @@ class DownloadScreenViewModel @Inject constructor(
     }
 
     private fun download(
-        link: String,
         fileName: String,
     ) {
         val downloadManager = applicationContext.getSystemService(DownloadManager::class.java)
-        val fileLink = "http://45.89.26.244:8080$link"
+        val fileLink = "http://45.89.26.244:8080/download/$fileName"
         Timber.e("fileLink")
         Timber.e(fileLink)
         val request = DownloadManager.Request(fileLink.toUri()).apply {
