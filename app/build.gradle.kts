@@ -12,22 +12,22 @@ plugins {
     id("kotlin-parcelize")
 }
 
-val keystorePropertiesFile = rootProject.file("keystore.properties")
-val keystoreProperties = Properties()
-keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+//val keystorePropertiesFile = rootProject.file("keystore.properties")
+//val keystoreProperties = Properties()
+//keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 
 android {
     namespace = "com.lingburg.filesalad"
     compileSdk = 35
 
-    signingConfigs {
-        create("release-key") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = file(keystoreProperties["storeFile"] as String)
-            storePassword = keystoreProperties["storePassword"] as String
-        }
-    }
+//    signingConfigs {
+//        create("release-key") {
+//            keyAlias = keystoreProperties["keyAlias"] as String
+//            keyPassword = keystoreProperties["keyPassword"] as String
+//            storeFile = file(keystoreProperties["storeFile"] as String)
+//            storePassword = keystoreProperties["storePassword"] as String
+//        }
+//    }
 
     defaultConfig {
         applicationId = "com.lingburg.filesalad"
@@ -49,7 +49,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
-            signingConfig = signingConfigs.getByName("release-key")
+//            signingConfig = signingConfigs.getByName("release-key")
         }
 
         debug {
@@ -57,8 +57,6 @@ android {
             isDebuggable = true
             isMinifyEnabled = false
             isShrinkResources = false
-
-//            signingConfig = signingConfigs.getByName("release-key")
         }
     }
     compileOptions {
@@ -123,10 +121,4 @@ dependencies {
 
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-}
-
-tasks.register("printVersionName") {
-    doLast {
-        println("v${android.defaultConfig.versionName}(${android.defaultConfig.versionCode})")
-    }
 }
