@@ -5,6 +5,7 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class FileUploadResponse(
-    @SerialName("words")
-    val words: List<String>,
+    @SerialName("key")
+    val key: String,
 )
+

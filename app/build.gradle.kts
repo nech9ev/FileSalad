@@ -58,7 +58,7 @@ android {
             isMinifyEnabled = false
             isShrinkResources = false
 
-            signingConfig = signingConfigs.getByName("release-key")
+//            signingConfig = signingConfigs.getByName("release-key")
         }
     }
     compileOptions {
@@ -103,8 +103,18 @@ dependencies {
     implementation(libs.ktor.ktor.client.android)
     implementation(libs.ktor.client.serialization)
     implementation(libs.ktor.ktor.client.logging)
+    implementation(libs.ktor.client.okhttp)
     implementation(libs.ktor.ktor.client.content.negotiation)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp)
+    implementation(libs.okhttp3.logging.interceptor)
+
+    implementation(platform(libs.okhttp.bom))
+    implementation(libs.okhttp)
+    implementation(libs.okhttp3.logging.interceptor)
+
+    implementation(libs.ktor.client.okhttp)
 
     implementation(libs.timber)
     lintChecks(libs.compose.lint.checks)

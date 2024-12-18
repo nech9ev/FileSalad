@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
+import java.sql.Time
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -71,11 +72,14 @@ class DownloadScreenViewModel @Inject constructor(
                     link = downloadLink.fileLink,
                     fileName = downloadLink.fileName,
                 )
-                snackbarState.emit(
+            },
+            catchBlock = { throwable ->
+                snackbarState.tryEmit(
                     SnackbarState.Success(
-                        text = "File downloaded"
+                        text = "Error while downloading. Try again please"
                     )
                 )
+                Timber.e(throwable)
             },
             finalBlock = {
                 uiState.update { ui ->
@@ -83,16 +87,12 @@ class DownloadScreenViewModel @Inject constructor(
                         downloadProgress = false,
                     )
                 }
-                snackbarState.tryEmit(
-                    SnackbarState.Success(
-                        text = "Error while downloading. Try again please"
-                    )
-                )
             }
         )
     }
 
     fun onDocumentSelected(uri: Uri) {
+        Timber.e(uri.toString())
         val fileName = FileManager.getFileName(uri, applicationContext.contentResolver)
         val path = FileManager.getFilePathFromUri(
             uri,
@@ -109,14 +109,24 @@ class DownloadScreenViewModel @Inject constructor(
                         uploadProgress = true,
                     )
                 }
+                val file = File(path)
+                Timber.e(file.readText(charset = Charsets.UTF_8))
                 val words = interactor.uploadFile(
-                    file = File(path),
+                    file = file,
                     name = fileName
-                ).words
+                ).key.split("_")
                 Timber.e(words.toString())
                 navigationEvent.emit(
                     NavigationEvent.ShareWords(
                         text = words.joinToString(separator = " "),
+                    )
+                )
+            },
+            catchBlock = { throwable ->
+                Timber.e(throwable)
+                snackbarState.tryEmit(
+                    SnackbarState.Error(
+                        text = "Error while uploading. Try again please"
                     )
                 )
             },
@@ -126,11 +136,6 @@ class DownloadScreenViewModel @Inject constructor(
                         uploadProgress = false,
                     )
                 }
-                snackbarState.tryEmit(
-                    SnackbarState.Success(
-                        text = "Error while uploading. Try again please"
-                    )
-                )
             }
         )
     }
@@ -140,7 +145,10 @@ class DownloadScreenViewModel @Inject constructor(
         fileName: String,
     ) {
         val downloadManager = applicationContext.getSystemService(DownloadManager::class.java)
-        val request = DownloadManager.Request(link.toUri()).apply {
+        val fileLink = "http://45.89.26.244:8080$link"
+        Timber.e("fileLink")
+        Timber.e(fileLink)
+        val request = DownloadManager.Request(fileLink.toUri()).apply {
             setTitle(fileName)
             setDescription("Downloading file with FileSalad")
             setNotificationVisibility(DownloadManager.Request.VISIBILITY_VISIBLE_NOTIFY_COMPLETED)

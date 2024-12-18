@@ -6,8 +6,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class FileDownloadResponse(
-    @SerialName("link")
+    @SerialName("downloadLink")
     val fileLink: String,
-    @SerialName("name")
+    @SerialName("fileName")
     val fileName: String,
 )

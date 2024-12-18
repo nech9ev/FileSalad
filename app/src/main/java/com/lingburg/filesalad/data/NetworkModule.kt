@@ -5,58 +5,62 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.android.Android
-import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.DefaultRequest
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
-import io.ktor.client.plugins.defaultRequest
-import io.ktor.client.plugins.logging.DEFAULT
-import io.ktor.client.plugins.logging.LogLevel
-import io.ktor.client.plugins.logging.Logger
-import io.ktor.client.plugins.logging.Logging
-import io.ktor.client.plugins.observer.ResponseObserver
-import io.ktor.client.request.accept
+import io.ktor.client.request.header
 import io.ktor.http.ContentType
+import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import timber.log.Timber
+import kotlinx.serialization.modules.SerializersModule
+import okhttp3.OkHttpClient
+import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-class NetworkModule {
+object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideHttpClient() = HttpClient(Android) {
-        install(ContentNegotiation) {
-            json(
-                Json {
-                    prettyPrint = true
-                    isLenient = true
-                    useAlternativeNames = true
-                    ignoreUnknownKeys = true
-                    encodeDefaults = false
-                }
-            )
-        }
-
-        install(HttpTimeout) {
-            connectTimeoutMillis = 5000L
-        }
-
-        install(Logging) {
-            logger = Logger.DEFAULT
-            level = LogLevel.BODY
-        }
-
-        install(ResponseObserver) {
-            onResponse { response ->
-                Timber.d("Status: ${response.status.value}")
+    internal fun provideHttpClient(
+        okHttpClient: OkHttpClient,
+        json: Json,
+    ) = HttpClient(OkHttp) {
+        engine {
+            preconfigured = okHttpClient
+            config {
+                retryOnConnectionFailure(true)
             }
         }
-
-        defaultRequest {
-            accept(ContentType.Application.Json)
+        install(DefaultRequest) {
+            header(HttpHeaders.ContentType, ContentType.Application.Json)
         }
+        install(ContentNegotiation) {
+            this.json(json)
+        }
+    }
+
+    @Provides
+    @Singleton
+    internal fun provideOkHttpClient(): OkHttpClient =
+        OkHttpClient.Builder()
+            .connectTimeout(120, TimeUnit.SECONDS)
+            .readTimeout(120, TimeUnit.SECONDS)
+            .writeTimeout(120, TimeUnit.SECONDS)
+            .apply {
+                addNetworkInterceptor(LoggingInterceptor())
+            }
+            .build()
+
+    @OptIn(ExperimentalSerializationApi::class)
+    @Provides
+    fun provideJson() = Json {
+        ignoreUnknownKeys = true
+        coerceInputValues = true
+        isLenient = true
+        allowTrailingComma = true
     }
 }
