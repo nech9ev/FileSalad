@@ -9,6 +9,7 @@ data class FilesScreenUi(
     val words: ImmutableList<WordUi> = persistentListOf(),
     val downloadProgress: Boolean,
     val uploadProgress: Boolean,
+    val baseUrl: String = "http://45.89.26.244:8080",
 ) {
 
     val inProgress = downloadProgress || uploadProgress

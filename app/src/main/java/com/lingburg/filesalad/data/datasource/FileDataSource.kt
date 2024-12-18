@@ -21,7 +21,8 @@ class FileDataSource @Inject constructor(
 
     suspend fun fetchDownloadLink(
         words: List<String>,
-    ): FileDownloadResponse = client.get("http://45.89.26.244:8080/files/download") {
+        baseUrl: String,
+    ): FileDownloadResponse = client.get("$baseUrl/files/download") {
         parameter("firstWord", words[0])
         parameter("secondWord", words[1])
         parameter("thirdWord", words[2])
@@ -31,9 +32,10 @@ class FileDataSource @Inject constructor(
     suspend fun uploadFile(
         file: File,
         name: String,
+        baseUrl: String,
     ): FileUploadResponse =
         client.submitFormWithBinaryData(
-            url = "http://45.89.26.244:8080/files/upload",
+            url = "$baseUrl/files/upload",
             formData = formData {
                 append("\"file\"", file.readBytes(), Headers.build {
                     append(HttpHeaders.ContentType, ContentType.Any.toString())

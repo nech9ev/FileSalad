@@ -13,11 +13,16 @@ class FileRepositoryImpl @Inject constructor(
 
     override suspend fun getDownloadLink(
         words: List<String>,
+        baseUrl: String,
     ): FileDownloadResponse {
-        return dataSource.fetchDownloadLink(words)
+        return dataSource.fetchDownloadLink(words, baseUrl)
     }
 
-    override suspend fun uploadFile(file: File, name: String): FileUploadResponse {
-        return dataSource.uploadFile(file, name)
+    override suspend fun uploadFile(
+        file: File,
+        name: String,
+        baseUrl: String,
+    ): FileUploadResponse {
+        return dataSource.uploadFile(file, name, baseUrl)
     }
 }

@@ -17,6 +17,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
@@ -26,6 +27,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Snackbar
 import androidx.compose.material3.SnackbarHost
@@ -114,6 +116,7 @@ fun FilesScreen(
         onWordTextChanged = viewModel::onWordTextChanged,
         onDownloadClick = viewModel::onDownloadClick,
         onDocumentSelected = viewModel::onDocumentSelected,
+        onBaseUrlChange = viewModel::onBaseUrlChange,
         modifier = modifier,
     )
 }
@@ -125,6 +128,7 @@ private fun FilesScreenView(
     onWordTextChanged: (index: Int, text: String) -> Unit,
     onDownloadClick: () -> Unit,
     onDocumentSelected: (Uri) -> Unit,
+    onBaseUrlChange: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
@@ -280,6 +284,20 @@ private fun FilesScreenView(
                         true -> LinearProgressIndicator()
                     }
                 }
+                OutlinedTextField(
+                    modifier = Modifier,
+                    label = {
+                        Text(
+                            text = "Base url and host",
+                        )
+                    },
+                    value = ui.baseUrl,
+                    onValueChange = onBaseUrlChange,
+                    singleLine = true,
+                    keyboardActions = KeyboardActions(
+                        onDone = { focusManager.clearFocus() }
+                    ),
+                )
             }
         }
     )
@@ -311,5 +329,6 @@ private fun FilesViewPreview() = AppTheme {
         onWordTextChanged = { _, _ -> },
         onDownloadClick = {},
         onDocumentSelected = {},
+        onBaseUrlChange = {},
     )
 }

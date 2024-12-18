@@ -22,7 +22,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import timber.log.Timber
 import java.io.File
-import java.sql.Time
 import javax.inject.Inject
 import kotlin.coroutines.CoroutineContext
 import kotlin.coroutines.EmptyCoroutineContext
@@ -67,7 +66,7 @@ class DownloadScreenViewModel @Inject constructor(
                         downloadProgress = true,
                     )
                 }
-                val downloadLink = interactor.getDownloadLink(words)
+                val downloadLink = interactor.getDownloadLink(words, uiState.value.baseUrl)
                 download(
                     fileName = downloadLink.fileName,
                 )
@@ -112,7 +111,8 @@ class DownloadScreenViewModel @Inject constructor(
                 Timber.e(file.readText(charset = Charsets.UTF_8))
                 val words = interactor.uploadFile(
                     file = file,
-                    name = fileName
+                    name = fileName,
+                    baseUrl = uiState.value.baseUrl,
                 ).key.split("_")
                 Timber.e(words.toString())
                 navigationEvent.emit(
@@ -143,7 +143,7 @@ class DownloadScreenViewModel @Inject constructor(
         fileName: String,
     ) {
         val downloadManager = applicationContext.getSystemService(DownloadManager::class.java)
-        val fileLink = "http://45.89.26.244:8080/download/$fileName"
+        val fileLink = "${uiState.value.baseUrl}/download?param=$fileName"
         Timber.e("fileLink")
         Timber.e(fileLink)
         val request = DownloadManager.Request(fileLink.toUri()).apply {
@@ -165,6 +165,12 @@ class DownloadScreenViewModel @Inject constructor(
         return if (extension != null) {
             MimeTypeMap.getSingleton().getMimeTypeFromExtension(extension)
         } else null
+    }
+
+    fun onBaseUrlChange(text: String) {
+        uiState.update { ui ->
+            ui.copy(baseUrl = text)
+        }
     }
 }
 
