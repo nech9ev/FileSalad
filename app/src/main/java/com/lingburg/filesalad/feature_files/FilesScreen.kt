@@ -284,20 +284,6 @@ private fun FilesScreenView(
                         true -> LinearProgressIndicator()
                     }
                 }
-                OutlinedTextField(
-                    modifier = Modifier,
-                    label = {
-                        Text(
-                            text = "Base url and host",
-                        )
-                    },
-                    value = ui.baseUrl,
-                    onValueChange = onBaseUrlChange,
-                    singleLine = true,
-                    keyboardActions = KeyboardActions(
-                        onDone = { focusManager.clearFocus() }
-                    ),
-                )
             }
         }
     )
