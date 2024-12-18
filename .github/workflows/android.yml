@@ -15,15 +15,6 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-        
-      - name: Generate keystore.properties
-        run: |
-          cat <<EOF > keystore.properties
-          storePassword:"${{ secrets.STORE_PASSWORD }}"
-          keyPassword:"${{ secrets.KEY_PASSWORD }}"
-          keyAlias:"${{ secrets.KEY_ALIAS }}"
-          storeFile:keystore.jks
-          EOF
 
       - name: Generate file name env var
         run: |
@@ -31,35 +22,22 @@ jobs:
           DATE=$(date +'%d.%m.%Y')
           BRANCH_NAME=${GITHUB_REF##*/}
           MESSAGE=$(cat << EOF
-          AppName-release-${VERSION_NAME}-${BRANCH_NAME}-${DATE}
+          FileSalad-debug-${VERSION_NAME}-${BRANCH_NAME}-${DATE}
           EOF)
           echo OUTPUT_NAME=$MESSAGE >> $GITHUB_ENV
 
-      - name: Build release APK
-        run: bash ./gradlew assembleRelease --stacktrace
+      - name: Build debug APK
+        run: bash ./gradlew assembleDebug --stacktrace
 
       - name: Rename APK 
         run:
-          mv "./app/build/outputs/apk/release/app-release.apk" "./app/build/outputs/apk/release/${{ env.OUTPUT_NAME }}.apk"
+          mv "./app/build/outputs/apk/debug/app-debug.apk" "./app/build/outputs/apk/debug/${{ env.OUTPUT_NAME }}.apk"
 
-      - name: Upload release APK
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: ${{ env.OUTPUT_NAME }}
-          path: app/build/outputs/apk/release/${{ env.OUTPUT_NAME }}.apk
-
-      - name: Build release AAB
-        run: bash ./gradlew bundleRelease --stacktrace
-
-      - name: Rename AAB 
-        run:
-          mv "./app/build/outputs/bundle/release/app-release.aab" "./app/build/outputs/bundle/release/${{ env.OUTPUT_NAME }}.aab"
-      
-      - name: Upload release AAB
-        uses: actions/upload-artifact@v4
-        with:
-          name: ${{ env.OUTPUT_NAME }}
-          path: app/build/outputs/bundle/release/${{ env.OUTPUT_NAME }}.aab    
+          path: app/build/outputs/apk/debug/${{ env.OUTPUT_NAME }}.apk
 
 
       
